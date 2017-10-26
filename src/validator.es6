@@ -434,7 +434,7 @@ function doIntrinsicRef(ref, key){
 
     // Check if it's of a String type
     if(typeof refValue != "string"){
-        addError("crit", "Intrinsic Function Ref expects a string", placeInTemplate, "Ref");
+        addError("crit", `Intrinsic Function Ref expects a string, got ${refValue} instead`, placeInTemplate, "Ref");
     }else {
         // Check if the value of the Ref exists
         resolvedVal = getRef(refValue);
