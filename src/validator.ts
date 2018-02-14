@@ -785,20 +785,35 @@ function doIntrinsicIf(ref: any, key: string){
             let resolvedValue = [];
             for(let i=0; i < value.length; i++) {
                 let keys = Object.keys(value[i]);
-                if (awsIntrinsicFunctions['Fn::If']['supportedFunctions'].indexOf(keys[0]) !== -1) {
-                    resolvedValue.push(resolveIntrinsicFunction(value[i], keys[0]));
+                if (awsIntrinsicFunctions.hasOwnProperty(keys[0])) {
+                    if (awsIntrinsicFunctions['Fn::If']['supportedFunctions'].indexOf(keys[0]) !== -1) {
+                        resolvedValue.push(resolveIntrinsicFunction(value[i], keys[0]));
+                    }else{
+                        addError('crit', `Fn::If does not allow ${keys[0]} as a nested function within an array`, placeInTemplate, 'Fn::If');
+                    }
+                }else if (typeof value[i] === "object"){
+                    // if value[i] is an object but not an intrisic function itself, we still need to go and resolve its children recursively
+                    keys = Object.keys(value[i]);
+                    if (awsIntrinsicFunctions.hasOwnProperty(Object.keys(value[i][keys[0]])[0])) {
+                        value[i][keys[0]] = resolveIntrinsicFunction(value[i][keys[0]], Object.keys(value[i][keys[0]])[0]);
+                    }
+                    resolvedValue.push(value[i])
                 }else{
-                    addError('crit', `Fn::If does not allow ${keys[0]} as a nested function within an array`, placeInTemplate, 'Fn::If');
+                    return value[i]
                 }
             }
             // Return the resolved array
             return resolvedValue;
         }else if(typeof value === "object") {
             let keys = Object.keys(value);
-            if (awsIntrinsicFunctions['Fn::If']['supportedFunctions'].indexOf(keys[0]) !== -1) {
-                return resolveIntrinsicFunction(value, keys[0]);
+            if (awsIntrinsicFunctions.hasOwnProperty(keys[0])) {
+                if (awsIntrinsicFunctions['Fn::If']['supportedFunctions'].indexOf(keys[0]) !== -1) {
+                    return resolveIntrinsicFunction(value, keys[0]);
+                }else{
+                    addError('crit', `Fn::If does not allow ${keys[0]} as a nested function`, placeInTemplate, 'Fn::If');
+                }
             }else{
-                addError('crit', `Fn::If does not allow ${keys[0]} as a nested function`, placeInTemplate, 'Fn::If');
+                return value
             }
         }else {
             return value;
