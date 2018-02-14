@@ -1,0 +1,52 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "Nested Fn::If",
+
+	"Parameters": {
+		"ApplicationEnvironment": {
+			"Description": "Application Environment",
+			"Type": "String",
+			"AllowedValues": ["dev", "prod"],
+			"Default": "prod"
+		}
+	},
+
+	"Mappings": {
+		"Region": {
+			"ap-southeast-2": {
+				"SSLCertificateId1": "arn:aws:acm:ap-southeast-2:123345678987:certificate/asdfasd-fasdf-asdf-asd-fasdf",
+				"SSLCertificateId2": "arn:aws:acm:ap-southeast-2:123345678987:certificate/asdfasd-fasdf-asdf-asd-fasdf"
+			}
+		}
+	},
+
+	"Conditions": {
+		"IsProduction": {"Fn::Equals": [{"Ref": "ApplicationEnvironment"}, "prod"]},
+		"IsNonProd": {"Fn::Equals": [{"Ref": "ApplicationEnvironment"}, "dev"]}
+	},
+
+	"Resources": {
+		"LoadBalancerExternalListenerHttps": {
+			"Type": "AWS::ElasticLoadBalancingV2::Listener",
+			"Properties": {
+				"DefaultActions": [{
+					"Type": "forward",
+					"TargetGroupArn": "arn:aws:elasticloadbalancing:ap-southeast-2:12345678987:targetgroup/muh-target-group/asdasdfasdfasdf"
+				}],
+				"LoadBalancerArn": "arn:aws:elasticloadbalancing:ap-southeast-2:12345678987:loadbalancer/app/muh-load-balancer/asdfasdfasdf",
+				"Port": "443",
+				"Protocol": "HTTPS",
+				"Certificates": {"Fn::If": [
+					"IsProduction",
+					[
+						{ "CertificateArn": {"Fn::FindInMap": ["Region", {"Ref": "AWS::Region"}, "SSLCertificateId1"]}}
+					],
+					[
+						{"CertificateArn": {"Fn::FindInMap": ["Region", {"Ref": "AWS::Region"}, "SSLCertificateId2"]}}
+					]
+				]},
+				"SslPolicy": "ELBSecurityPolicy-2016-08"
+			}
+		}
+	}
+}

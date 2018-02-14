@@ -48,6 +48,14 @@ describe('validator', () => {
             expect(result['errors']['crit']).to.have.lengthOf(0);
         });
 
+        it('a valid (5.json) template should return an object with validTemplate = true, no crit errors', () => {
+            const input = require('../../testData/valid/json/5.json');
+            validator.addPseudoValue("AWS::Region", "ap-southeast-2");
+            let result = validator.validateJsonObject(input);
+            expect(result).to.have.deep.property('templateValid', true);
+            expect(result['errors']['crit']).to.have.lengthOf(0);
+        });
+
         it('2 invalid resource types should return an object with validTemplate = false, 2 crit errors', () => {
             const input = require('../../testData/invalid/json/1_invalid_resource_type.json');
             let result = validator.validateJsonObject(input);
